@@ -1,0 +1,69 @@
+Que 1 : Tell about yourself ?
+======> 1. Hi <name> ,This is shailesh ,Shailesh Rajanna Padalwar working as Software Developer at Buzzworks .
+        2. Having Experience in python-Django Web-development around 3years 6 months .
+        3. Having Experience in Django Rest Framework,Django ORM,postgresql,ubuntu AND front-end technologies (HTML,CSS,BootStrap,JavaScript,jQuery,Ajax).
+        4. Having knowledge and experience in python OOPS ,decorators,django ORM .
+        5. My current project name is flexydial :
+           =====================================
+           1. Fast,Friendly and Flexible Contact Center Solutions .
+	   2. Dialer Management Software .
+	   3. It is callcenter application useful for callcenters,banks .
+	   4. There are two pannels agent and admin .
+	   5. For calling purpose we used freeswitch ,it googles open source application .
+	   6. For backend : python-Django,NodeJs .DB : postgresql .
+	   7. Front-end   : HTML,CSS,JavaScript,jQuery,VueJS .
+	   8. Temparary_memory or cache : Redis .
+	  ##1. What kind of tasks u did here ?
+	     task 1 : site_id  | middleware_concept ,custom models,for every table site field .
+	     task 2 : file transfer from one server to other server schedular based at morning 6am | paramiko module ,username,hostname,password ,sftp(Secure File Transfer Protoco) method.
+	                 
+	              	ssh_client=paramiko.SSHClient()
+			ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) #to connect with server 
+			ssh_client.connect(hostname=hostname,username=username,password=password)
+			sftp_client=ssh_client.open_sftp() #sftp connection establishment	
+			#src_path="/home/test/upload_22sep2.txt"
+			src_path=file_path
+			#dest_path="/home/test/"+'_'+str('ic4_trails')+'_'+str(date.today())+".xlsx"
+			##for testing
+			now = str(datetime.now()) 
+			dest_path="/home/test/"+'_'+str('ic4_trails')+'_'+now+".xlsx" #for testing
+			sftp_client.put(src_path,dest_path)
+			
+	     task 3 :  predictive live dashboard | redis ,Django ORM .
+	     task 4 :  show kyc documents of all customers at campaign login .| bootstrap model target model ,datatables in javascript .
+	     task 5 :  scripts | to move files,rename crm field names ,update contacts queued .
+	     task 6 :  To solve migration issues at production by editing migration files .
+	     task 7 :  Reduce load issue while downloading heavy/large file by chunksize .
+	     task 8 :  automatic calling | 1. automatic campaign login 2. automatic calling based on given callmod .
+Que 2: How redis ,we can use in Django ?
+=======>
+       1. settings.py
+          ----------- 	     
+	     R_SERVER = redis.Redis(connection_pool=redis.ConnectionPool(host='localhost',port=6379,db=0))
+	     
+	2. uses :
+	 --------
+	 
+	     AGENTS = pickle.loads(settings.R_SERVER.get("agent_status") or pickle.dumps({}))  
+	     settings.R_SERVER.set("download", pickle.dumps(DOWNLOAD_STATUS))
+	     
+Que 3: What is pickling in python ?
+======>
+     The process of converting an object from python supported form to either file supported
+     form or network supported form, is called serialization (Marshalling or pickling)
+
+
+	          
+	     
+	     
+	     
+	     
+	     
+	     
+	     
+	     
+	     
+			
+				
+		
+		
