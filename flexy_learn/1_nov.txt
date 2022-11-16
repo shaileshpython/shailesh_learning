@@ -1,0 +1,55 @@
+#client name and validation code.
+1. callcenter/decorators.py
+===========================
+def client_validation(function):
+	"""
+	This validation is used to do validation of
+	client is already exist or not with same name or same domain
+	at the time of campaign creation
+	"""
+	def wrap(request, *args, **kwargs):
+		name = request.POST.get('name')
+		domain = request.POST.get('domain')
+
+		if Site.objects.filter(name__iexact=name.strip()).exists():
+			return JsonResponse({"client_name_error": "Client with this name already exists"},status=500)
+		if Site.objects.filter(domain__iexact=domain.strip()).exists():
+			return JsonResponse({"client_domain_error": "Client with this domain already exists"},status=500)
+		return function(request, *args, **kwargs)
+	return wrap
+
+2. callcenter/views.py
+======================
+@method_decorator(client_validation,name='post')
+class ClientsCreateApiView(LoginRequiredMixin,APIView):
+
+3. client/client_create.html
+============================
+<input type="text" class="form-control blockfirstspace" id="name" placeholder="Name" name="name" value="" data-toggle="tooltip" data-original-title="Enter Unique Clientname " data-validation="length alphanumeric" data-validation-length="min4" data-validation-allowing="_@." data-validation-error-msg-container="#client-name-error">
+														<span id="client-name-error"></span>
+
+<input type="text" class="form-control blockfirstspace" id="domain" placeholder="Address" name="domain" value="" data-togpgle="tooltip" data-validation="length alphanumeric" data-validation-length="min4" data-validation-allowing="_@." data-validation-error-msg-container="#client-domain-error">
+														<span id="client-domain-error"></span>
+
+
+
+4. admin.js
+===========
+  if (data["responseJSON"]["client_name_error"]){
+                        $("#client-name-error").html(`<span class="help-block form-error">${data["responseJSON"]["client_name_error"]}</span>`).addClass("has-error")
+                        $("#client-name-error").removeClass("valid").addClass("error")                  
+                    }
+                    // "{"client_name_error": "Client with this name already exists"}"
+                    // "{"client_domain_error": "Client with this domain already exists"}"
+                    
+                    if (data["responseJSON"]["client_domain_error"]) {
+                        $("#client-domain-error").html(`<span class="help-block form-error">${data["responseJSON"]["client_domain_error"]}</span>`).addClass("has-error")
+                        $("#client-domain-error").removeClass("valid").addClass("error")
+                    }
+
+
+
+
+
+
+
