@@ -1,0 +1,474 @@
+def campaign_edit_validation(function):
+ 	"""
+ 	This validation is used to do validation of
+@@ -496,7 +510,7 @@ def check_create_permission(function):
+ 					permission_dict['can_create'] = True
+ 				if 'R' in permissions['switchscreen']:
+ 					permission_dict['can_switch'] = True
+-				if 'R' in permissions['system_boot_action']:
++				if 'system_boot_action' in permissions and 'R' in permissions['system_boot_action']:
+ 					permission_dict['can_boot'] = True
+ 		else:
+ 			permission_dict = {'can_create':True, 'can_switch':True, 'can_boot':True}
+@@ -523,7 +537,7 @@ def check_update_permission(function):
+ 					permission_dict['can_update'] = True
+ 				if 'R' in permissions['switchscreen']:
+ 					permission_dict['can_switch'] = True
+-				if 'R' in permissions['system_boot_action']:
++				if 'system_boot_action' in permissions and 'R' in permissions['system_boot_action']:
+ 					permission_dict['can_boot'] = True
+ 		else:
+ 			permission_dict = {'can_update':True, 'can_switch':True, 'can_boot':True}
+
+
+
+@@ -95,9 +95,10 @@ class CampaignPaginationSerializer(serializers.ModelSerializer):
+ 	switch = serializers.SerializerMethodField()
+ 	wfh_caller_id = serializers.SerializerMethodField()
+ 	created_by_user = serializers.SerializerMethodField()
++	site = serializers.SerializerMethodField()
+ 	class Meta:
+ 		model = Campaign
+-		fields = ('name', 'id', 'extension', 'switch', 'created_by_user','status', 'wfh_caller_id','created_date','modified_date')
++		fields = ('name', 'id', 'extension', 'switch', 'created_by_user','status', 'wfh_caller_id','created_date','modified_date','site')
+ 
+ 	def get_switch(self, obj):
+ 		if obj.switch:
+@@ -105,6 +106,12 @@ class CampaignPaginationSerializer(serializers.ModelSerializer):
+ 		else:
+ 			return ""
+ 			
++	def get_site(self,obj):
++		if obj.site:
++			return obj.site.domain
++		else:
++			return ""
++			
+ 	def get_wfh_caller_id(self, obj):
+ 		if obj.id:
+ 			try:
+
+
+
+
+
+
+
+
+
+
+
+diff --git a/callcenter/utility.py b/callcenter/utility.py
+index 90d7cb4..33506cd 100755
+--- a/callcenter/utility.py
++++ b/callcenter/utility.py
+@@ -69,7 +69,7 @@ def diff_time_in_seconds(timestamp):
+ 
+ def check_non_admin_user(user):
+ 	""" check user is adim or not """
+-	if (user.is_superuser):
++	if (user.is_superuser) or (user.user_role and user.user_role.access_level=='Admin'):
+ 		return False
+ 	return True
+ 
+@@ -487,23 +487,28 @@ def validate_third_party_token(token, ip_address):
+ 			return False
+ 	return False
+ 
+-def get_pre_campaign_create_info(request):
++def get_pre_campaign_create_info(request,sel_site=''):
+ 	"""
+ 	this is the function defined for get the info of campaign before create 
+ 	"""	
+ 	data = {}
+-	groups = Group.objects.all()
++	if sel_site =='':
++		user_obj = User.objects.filter(username=request.user).first()
++		sel_site = user_obj.site.domain
++		
++	groups = Group.objects.filter(site__domain=sel_site)
+ 	if check_non_admin_user(request.user):
+ 		groups = groups.filter(created_by=request.user)
+-	data["gateway_list"] = SMSGateway.objects.all().values("id","name")
++	data["gateway_list"] = SMSGateway.objects.filter(site__domain=sel_site).values("id","name")
+ 	data["groups"] = GroupSerializer(groups, many=True).data
+ 	department_id = groups.values_list("id", flat=True)
+-	data["call_time"] = CampaignSchedule.objects.values("id", "name")
+-	data["switch_detail"] = Switch.objects.values("name", "id")
++	data["call_time"] = CampaignSchedule.objects.filter(site__domain=sel_site).values("id", "name")
++	data["switch_detail"] = Switch.objects.filter(site__domain=sel_site).values("name", "id")
+ 	# user_list = User.objects.values("id", "username")
+-	user_list = User.objects.filter(site_id=site_default()).values("id", "username")
++	print(data['switch_detail'],"switch_detailss")
++	user_list = User.objects.filter(site__domain=sel_site).values("id", "username")
+ 	if request.user.is_superuser:
+-		user_list=User.objects.all().values("id", "username")
++		user_list=User.objects.filter(site__domain=sel_site).values("id", "username")
+ 	else:
+ 		user_list = User.objects.filter(id__in=user_hierarchy_func(request.user.id)).values("id", "username")
+ 	data["users"] = user_list
+@@ -514,18 +519,18 @@ def get_pre_campaign_create_info(request):
+ 	data["lead_status"] = Status
+ 	standard_dispo = ["Dnc", "Not Connected", 
+ 			"Connected", "Callback", "Busy", "Transfer"]
+-	data["default_dispo"] = list(Disposition.objects.filter(name__in=standard_dispo).exclude(status="Delete").values("id", "name",
++	data["default_dispo"] = list(Disposition.objects.filter(site__domain=sel_site,name__in=standard_dispo).exclude(status="Delete").values("id", "name",
+ 		'color_code', 'dispos'))
+-	data["disposition"] = list(Disposition.objects.filter(
++	data["disposition"] = list(Disposition.objects.filter(site__domain=sel_site,
+ 		status='Active').values("id", "name", 'color_code', 'dispos').exclude(name__in=standard_dispo).exclude(status="Delete"))
+ 	data["campaign_call_mode"] = CALL_MODE
+-	data['dispo_list'] = Disposition.objects.all().exclude(status="Delete").values("id", "name","color_code").exclude(name__in=standard_dispo)
+-	data['relationtag_list'] = RelationTag.objects.all().values("id","name","color_code").exclude(status="Inactive")
+-	data["agent_status_list"] = PauseBreak.objects.filter(created_by__username=request.user).values("id", "name",'break_color_code')
++	data['dispo_list'] = Disposition.objects.filter(site__domain=sel_site).exclude(status="Delete").values("id", "name","color_code").exclude(name__in=standard_dispo)
++	data['relationtag_list'] = RelationTag.objects.filter(site__domain=sel_site).values("id","name","color_code").exclude(status="Inactive")
++	data["agent_status_list"] = PauseBreak.objects.filter(site__domain=sel_site,created_by__username=request.user).values("id", "name",'break_color_code')
+ 	# data["available_manager"] = User.objects.filter(user_role__name="manager",
+-	data["users_count"] = User.objects.all().count()
++	data["users_count"] = User.objects.filter(site__domain=sel_site).count()
+ 	data["dial_ratio"] = DIAL_RATIO_CHOICES
+-	data['css_obj'] = CSS.objects.values('id','name')
++	data['css_obj'] = CSS.objects.filter(site__domain=sel_site).values('id','name')
+ 	# data["scripts"] = Script.objects.values("id", "name")
+ 	return data
+ 
+@@ -534,14 +539,17 @@ def get_pre_campaign_edit_info(pk, request):
+ 	this is the function defined for geting the info of a campaign after creation 
+ 	"""	
+ 	data = {}
+-	data["camp_schedule"] = CampaignSchedule.objects.all().values("id", "name")
+-	data["switch_detail"] = Switch.objects.values("name", "id")
+-	data["gateway_list"] = SMSGateway.objects.all().values("id","name")
+-	data["trunk"] = DialTrunk.objects.values("switch__id", "name", "id")
++	# if sel_site =='':
++	camp_site = Campaign.objects.get(id=pk).site.domain
++	data['camp_domain'] = camp_site
++	data["camp_schedule"] = CampaignSchedule.objects.filter(site__domain=camp_site).values("id", "name")
++	data["switch_detail"] = Switch.objects.filter(site__domain=camp_site).values("name", "id")
++	data["gateway_list"] = SMSGateway.objects.filter(site__domain=camp_site).values("id","name")
++	data["trunk"] = DialTrunk.objects.filter(site__domain=camp_site).values("switch__id", "name", "id")
+ 	data["campaign_status"] = Status
+ 	data["lead_status"] = Status
+ 	object_data = get_object(pk, "callcenter", "Campaign")
+-	data["emailgateway_list"] = EmailGateway.objects.filter(template__in = object_data.email_campaign.all())
++	data["emailgateway_list"] = EmailGateway.objects.filter(site__domain=camp_site,template__in = object_data.email_campaign.all())
+ 	data["strategy"] = CAMPAIGN_STRATEGY_CHOICES
+ 	data["campaign"] = object_data
+ 	data['dial_method'] = json.dumps(object_data.dial_method)
+@@ -549,15 +557,16 @@ def get_pre_campaign_edit_info(pk, request):
+ 	self_campaign = object_data.group.all().values_list("id", flat=True)
+ 	self_dispo = object_data.disposition.all().values_list("id", flat=True)
+ 	self_relationtag = object_data.relation_tag.all().values_list("id",flat=True)
+-	groups = Group.objects.all()
++	groups = Group.objects.filter(site__domain=camp_site)
+ 	data["is_non_admin"] = check_non_admin_user(request.user)
+ 	data['non_user'] = []
+ 	if request.user.is_superuser:
+-		users = User.objects.all().values('id',"username")
++		users = User.objects.filter(site__domain=camp_site).values('id',"username")
+ 	else:
+ 		users = User.objects.filter(id__in=user_hierarchy_func(request.user.id))
+ 	#if data["is_non_admin"]:
+-	if not request.user.is_superuser: #data["is_non_admin"]:
++	# if not request.user.is_superuser: 
++	if data["is_non_admin"]:
+ 		groups = groups.filter(Q(user_group=request.user))
+ 		data['user_groups'] = groups.values_list('id',flat=True)
+ 		#users = users.filter(Q(group__in=request.user.group.all())|Q(created_by=request.user)|Q(reporting_to=request.user))
+@@ -566,29 +575,29 @@ def get_pre_campaign_edit_info(pk, request):
+ 		users = users.exclude(id__in=object_data.users.all().values_list("id", flat=True)).values("id", "username")
+ 	data["users"] = users
+ 	data["groups"] = GroupSerializer(groups.exclude(id__in=self_campaign), many=True).data
+-	data["disposition"] = list(Disposition.objects.filter(
++	data["disposition"] = list(Disposition.objects.filter(site__domain=camp_site,
+ 		status='Active').exclude(id__in=self_dispo).values("id", "name", 'color_code', 'dispos'))
+-	data["relationtag"] = list(RelationTag.objects.filter(
++	data["relationtag"] = list(RelationTag.objects.filter(site__domain=camp_site,
+ 		status='Active').exclude(id__in=self_relationtag).values("id","name","color_code","relation_fields"))
+-	data["audio_files"] = AudioFile.objects.all().values("name", "id")
++	data["audio_files"] = AudioFile.objects.filter(site__domain=camp_site).values("name", "id")
+ 	self_agent_brekas = object_data.breaks.all().values_list(
+ 		"id", flat=True)
+-	data["agent_status_list"] = PauseBreak.objects.filter(created_by__username=request.user).exclude(
++	data["agent_status_list"] = PauseBreak.objects.filter(site__domain=camp_site,created_by__username=request.user).exclude(
+ 		id__in=list(self_agent_brekas)).values("id", "name", 'break_color_code')
+-	data["scripts"] = Script.objects.values("id", "name")
+-	data["users_count"] = User.objects.all().count()
+-	data['css_obj'] = CSS.objects.values('id','name')
++	data["scripts"] = Script.objects.filter(site__domain=camp_site).values("id", "name")
++	data["users_count"] = User.objects.filter(site__domain=camp_site).count()
++	data['css_obj'] = CSS.objects.filter(site__domain=camp_site).values('id','name')
+ 	data['crm_field'] = ''
+-	crm_fields = CrmField.objects.filter(campaign__name=object_data.name)
++	crm_fields = CrmField.objects.filter(site__domain=camp_site,campaign__name=object_data.name)
+ 	if crm_fields.exists():
+ 		data['crm_field'] = crm_fields.first().unique_fields
+ 	numbers = [i for i in range(0,10)]
+ 	keys = ['*','#']
+ 	numbers.extend(keys)
+ 	data['dial_number'] = numbers
+-	trunk_group = DiaTrunkGroup.objects.all().values("id","name")
++	trunk_group = DiaTrunkGroup.objects.filter(site__domain=camp_site).values("id","name")
+ 	data['trunk_group'] = list(trunk_group.values("id","name"))
+-	data["dial_trunk"] = DialTrunk.objects.values("switch__id", "name", "id")
++	data["dial_trunk"] = DialTrunk.objects.filter(site__domain=camp_site).values("switch__id", "name", "id")
+ 	# call_mode_list = list(CALL_MODE)
+ 	# data["campaign_call_mode"] = [i for i in call_mode_list if i[0] not  in object_data.callback_mode]
+ 	return data
+@@ -885,7 +894,7 @@ def upload_users(data, logged_in_user):
+ 	domain_obj=Switch.objects.filter().first()	
+ 	for index, row in data.iterrows():
+ 		username = row.get("username", "")
+-		username=str(username).strip()
++		username = str(username).strip()
+ 		site_domain = str(row.get("site_domain","")).strip()
+ 		username=re.sub("\s", "_", username)
+ 		mobile_no = row.get('mobile',"")
+@@ -894,15 +903,16 @@ def upload_users(data, logged_in_user):
+ 		employee_id = row.get("employee_id","")
+ 		user_obj_exists=User.objects.filter(username=username).exists()
+ 		user, created = User.objects.get_or_create(username=username)
+-		user_role = row.get("role")
++		if created:
++			user_role = row.get("role","").strip()
+ 		# user_role = row.get("role",user.user_role.name)
+ 		if user_role:
+ 			role = UserRole.objects.filter(site__domain=site_domain,name__iexact=user_role.strip()).first()
+ 			user.user_role = role
+ 
+ 		user_groups_tup=list(User.objects.filter(username=username).values_list("group__name"))
+-		user_groups=[item for t in user_groups_tup for item in t]
+-		user_str_groups=','.join(map(str, user_groups))
++		user_groups= [item for t in user_groups_tup for item in t]
++		user_str_groups =' ,'.join(map(str, user_groups))
+ 		group=row.get('group',user_str_groups)
+ 		if group:
+ 			group_lst=list(group.split(","))
+@@ -919,6 +929,10 @@ def upload_users(data, logged_in_user):
+ 				pass
+ 		else:
+ 			user.set_password(password)
++		if user_obj_exists:
++			if group:
++				user.group
++
+ 		user.email = row.get("email".strip(),user.email)
+ 		user.first_name = row.get('first_name',user.first_name)
+ 		user.last_name = row.get('last_name',user.last_name)
+@@ -959,6 +973,7 @@ def upload_users(data, logged_in_user):
+ 
+ 		user.save()
+ 		if created:
++
+ 			user_variable = UserVariable()
+ 			user_variable.user = user
+ 			extension_exist = UserVariable.objects.all().values_list('extension',flat=True)
+@@ -4048,7 +4063,6 @@ def default_agent_status(extension,agent_dict):
+ 		print('Log::default::username_is_missing::',extension,username)
+ 		agent_dict['username'] = username
+ 		agent_dict['name'] = first_name + ' ' + last_name
+-
+ 	agent_dict['login_status'] = True if "login_status" not in agent_dict else agent_dict['login_status']
+ 	agent_dict['campaign'] = '' if "campaign" not in agent_dict else agent_dict['campaign']
+ 	agent_dict['dialer_login_status'] = False if "dialer_login_status" not in agent_dict else agent_dict['dialer_login_status']
+diff --git a/callcenter/views.py b/callcenter/views.py
+index 06ba3cb..2270d98 100644
+--- a/callcenter/views.py
++++ b/callcenter/views.py
+@@ -1982,8 +1982,13 @@ class CampaignCreateApiView(LoginRequiredMixin, generics.CreateAPIView):
+ 	serializer_class = CampaignSerializer
+ 
+ 	def get(self, request,**kwargs):
+-		data = get_pre_campaign_create_info(request)
+-		all_trunk = DialTrunk.objects.filter(status="Active")
++		sel_site = request.GET.get('select_site','')
++		if sel_site =='':
++			user_obj = User.objects.filter(username=request.user).first()
++			sel_site = user_obj.site.domain
++		data = get_pre_campaign_create_info(request,sel_site=sel_site)
++		data['sel_site'] = sel_site
++		all_trunk = DialTrunk.objects.filter(site__domain=sel_site,status="Active")
+ 		data["trunk_list"] = list(all_trunk.annotate(text=F('name')).values("text","id","did_range"))
+ 		data["request"] = request
+ 		data["can_create"] = True
+@@ -1994,18 +1999,27 @@ class CampaignCreateApiView(LoginRequiredMixin, generics.CreateAPIView):
+ 		data['api_modes'] = API_MODE
+ 		data['enable_wfh'] = pickle.loads(settings.R_SERVER.get('enable_wfh') or pickle.dumps(False))
+ 		data['extension'] = 'NEW'
+-		data['trunk_group'] = list(DiaTrunkGroup.objects.all().values("id","name"))
++		data['trunk_group'] = list(DiaTrunkGroup.objects.filter(site__domain=sel_site).values("id","name"))
+ 		data = {**data, **kwargs['permissions']}
+ 		return Response(data)
+ 
+ 	def post(self, request):
++		print(request.POST.get('site',""),"----site-----")
++		print(request.POST,"pppppppppppppp")
++		site = request.POST.get('site',"")
++		site_obj = ''
++		if site:
++			site_obj = Site.objects.filter(domain=site).first()
+ 		campaign_serializer = self.serializer_class(data=request.POST)
+ 		lead_data = json.loads(request.POST.get("lead_recycle", ""))
+ 		existing_campaign = request.POST.get("existing_campaign", "")
+ 		trunk_detail = request.POST.get("trunk_detail","")
+ 		trunk_did_data = request.POST.get("trunk_did_data","")
+ 		if campaign_serializer.is_valid():
+-			campaign = campaign_serializer.save(created_by=request.user)
++			if site_obj:
++				campaign = campaign_serializer.save(created_by=request.user,site=site_obj)
++			else:
++				campaign = campaign_serializer.save(created_by=request.user)	
+ 			if not existing_campaign:
+ 				camp = CampaignVariable()
+ 			else:
+@@ -2076,7 +2090,7 @@ class CampaignEditApiView(LoginRequiredMixin, APIView):
+ 
+ 	def get(self, request, pk, format=None, **kwargs):
+ 		data = get_pre_campaign_edit_info(pk, request)
+-		all_trunk = DialTrunk.objects.filter(status="Active")
++		all_trunk = DialTrunk.objects.filter(site__domain=data['camp_domain'],status="Active")
+ 		data["trunk_list"] = list(all_trunk.annotate(text=F('name')).values("text","id","did_range"))
+ 		data["request"] = request
+ 		data['is_edit'] = True
+@@ -2171,6 +2185,7 @@ class CampaignListApiView(LoginRequiredMixin, APIView):
+ 	def get(self, request, **kwargs):
+ 		page_info = data_for_pagination(request)
+ 		campaign = Campaign.objects.all()
++		print(campaign,"---ccccccccccc------")
+ 		if check_non_admin_user(request.user):
+ 			list_user = user_hierarchy_func(request.user.id)
+ 			list_user.append(str(request.user.id))
+@@ -2198,7 +2213,9 @@ class CampaignListApiView(LoginRequiredMixin, APIView):
+ 		"paginate_by_columns":paginate_by_columns,"noti_count":noti_count
+ 		}
+ 		context = {**context, **kwargs['permissions'], **page_info}
++		context['sites'] = list(Site.objects.all().order_by('id').values_list('domain',flat=True))
+ 		if request.is_ajax():
++			print(campaign,"----------- campaign -------")
+ 			result = list(CampaignPaginationSerializer(campaign, many=True).data)
+ 			pagination_dict["table_data"] = result
+ 			context = {**context, **kwargs['permissions'], **pagination_dict}
+
+
+
+
+
+
+
+
+diff --git a/templates/campaign/campaign.html b/templates/campaign/campaign.html
+index 20de87b..f091648 100755
+--- a/templates/campaign/campaign.html
++++ b/templates/campaign/campaign.html
+@@ -41,6 +41,9 @@
+ 									<th data-data="created_by_user">Created By</th>
+ 									<th data-data="wfh_caller_id">WFH Caller Id</th>
+ 									<th data-data="status">Status</th>
++									{% if request.user.is_superuser %}
++									<th data-data="site">Site</th>
++									{% endif %}
+ 									<th data-data="created_date" class="list_date">created date</th>
+ 									<th data-data="modified_date" class="list_date">modified date</th>
+ 									{% if can_update or can_delete %}
+@@ -83,14 +86,53 @@
+ </div>
+ {% endif %}
+ {% if can_create %}
++{% if request.user.is_superuser %}
+ <!-- action buttons -->
++<div id="select-site" class="modal fade" tabindex="-1" aria-hidden="true">
++	<div class="modal-dialog">
++		<form method="GET" id="site_selection_form" action="{% url 'create-campaigns' %}">
++		<div class="modal-content">
++			<div class="modal-header p-3">
++				<h5 class="modal-title">SELECT SITE</h5>
++				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
++					<span aria-hidden="true">&times;</span>
++				</button>
++			</div>
++			<div class="modal-body p-3">
++				<div class="form-group" id="set-agent-campaign">
++					<label for="select_site" class="text-muted">Available Sites</label>
++					<select id="select_site" name="select_site" class="crm-form-control">
++						{% for site in sites %}
++						<option value="{{ site }}">{{ site }}</option>
++						{% endfor %}
++					</select>
++				</div>
++			</div>
++			<div class="modal-footer">
++				<button id="stSubmit" form="site_selection_form" type="submit" class="btn btn-warning text-white mb-btn-primary">
++					<span class="fa fa-check-square" aria-hidden="true"></span> SUBMIT
++				</button>
++			</div>
++		</form>
++		</div>
++	</div>
++</div>
++{% endif %}
+ <div class="bottom-menu">
+ 	<div class="action-button-circle">
++		{% if request.user.is_superuser %}
++		<!-- <a href="{% url 'create-campaigns' %}"> -->
++			<div class="circle-button skin-black">
++				<i class="fa fa-plus button-area add-campaigns" id="create-campaign" data-toggle="modal" data-target="#select-site"></i>
++			</div>
++		<!-- </a> -->
++		{% else %}
+ 		<a href="{% url 'create-campaigns' %}">
+ 			<div class="circle-button skin-black">
+-				<i class="fa fa-plus button-area add-campaigns"></i>
++				<i class="fa fa-plus button-area add-campaigns" id="create-campaign"></i>
+ 			</div>
+ 		</a>
++		{% endif %}
+ 	</div>
+ </div>
+ {% endif %}
+diff --git a/templates/campaign/campaign_create.html b/templates/campaign/campaign_create.html
+index 7115a77..60d4185 100755
+--- a/templates/campaign/campaign_create.html
++++ b/templates/campaign/campaign_create.html
+@@ -926,6 +926,7 @@
+ 							<input type="hidden" name="wfh_dispo" id="wfh_dispo">
+ 							<input type="hidden" name="trunk_did_data" id="trunk_did_data">
+ 							<input type="hidden" id="hopper_level_count_hidden"  value="">
++							<input type="hidden" name="site" id="site"  value="{{ sel_site }}">
+ 						</div>
+ 					</form>
+ 				</div>
+diff --git a/templates/client_management/clients.html b/templates/client_management/clients.html
+index c36b742..0b4471d 100644
+--- a/templates/client_management/clients.html
++++ b/templates/client_management/clients.html
+@@ -39,7 +39,6 @@
+ 									<th data-data="domain">Domain</th>
+ 									{% if can_update  %}
+ 										<th data-data="checkbox_co" class="checkbox_col">
+-											
+ 										</th>
+ 										<th data-data="action" class="action">Action</th>
+ 									{% endif %}
+diff --git a/templates/client_management/create_client.html b/templates/client_management/create_client.html
+index 5bb30a3..8fffaed 100644
+--- a/templates/client_management/create_client.html
++++ b/templates/client_management/create_client.html
+@@ -1,7 +1,7 @@
+ {% extends "base.html" %}
+ {% load static %}
+ 
+-{% block title %}Edit Client{% endblock title %}
++{% block title %}Create Client{% endblock title %}
+ 
+ {% block header %}Client Management<small>Create Client</small>{% endblock header %}
+ 
+@@ -45,7 +45,7 @@
+ 												<div class="form-group row">
+ 													<label for="clientname" class="col-sm-4 col-form-label">name<span class="star">*</span> :</label>
+ 													<div class="col-sm-8">
+-														
++														<!-- <span id="client-name-error"></span> -->
+ 														<input type="text" class="form-control blockfirstspace" id="name" placeholder="Name" name="name" value="" data-toggle="tooltip" data-original-title="Enter Unique Clientname " data-validation="length alphanumeric" data-validation-length="min4" data-validation-allowing="_@." data-validation-error-msg-container="#client-name-error">
+ 														<span id="client-name-error"></span>
+ 													</div>
