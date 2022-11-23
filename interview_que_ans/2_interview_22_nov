@@ -1,0 +1,127 @@
+22-Nov-2022(Teamlease-deepika)
+============
+
+1. what is difference between primary key and unique key .
+2. where middleware will involve  only at request or both request and response .
+3. write one decorator program .
+4. code .
+   def test(item=[]):
+      item.append(1)
+      return item
+      
+   print(test()) #[1]
+   print(test()) ##[1,1]
+   
+5. django request and response cycle .
+6. what is serializers .
+7. what is difference between iterators and generators .
+8. how to clear redis cache ,how to get and set data in cache .
+9. what is difference between makemigrations and migrate command .
+10. default port number for django server .
+11. how to kill port .
+12. Difference between OneToOne and Foreign relation .
+13. Difference between shallow copy and deep copy .
+
+
+
+=====================================================================================================================================================
+-: Questions and Answers :-
+======================
+1. what is difference between primary key and unique key ?
+===>
+    	Every primary key is a unique .
+   	Key Differences Between Primary key and Unique key . 
+	Primary key will not accept NULL values whereas Unique key can accept NULL values.
+	A table can have only one primary key whereas there can be multiple unique key on a table .
+	A Clustered index automatically created when a primary key is defined whereas Unique key generates the non-clustered index.
+	A Primary key supports auto increment value.	A unique key does not supports auto increment value.
+	We cannot change or delete values stored in primary keys.	We can change unique key values.
+	
+2. where middleware will involve  only at request or both request and response .
+=======>	
+	If we want to perform any activity at the time of pre processing of the request or post
+	processing of the request then we should go for middleware.
+	
+	Client -->  Request ---> Middleware ---> modifiedrequest
+	
+	Server ---> Response ---> Middleware ---> modifiedresponse
+		
+	
+3. write one decorator program .
+=====>
+     Decorator is a function which can take a function as argument and extend its functionality
+     and returns modified function with extended functionality. 
+     
+def decor(func):
+	def inner(name):
+		if name=="Sunny":
+			print("Hello Sunny Bad Morning")
+		else:
+			func(name)
+
+		return inner
+
+
+@decor
+def wish(name):
+    print("Hello",name,"Good Morning")
+    
+wish("Durga")
+wish("Ravi")
+wish("Sunny")
+
+4. 
+5.
+6.
+7.
+8.
+9.
+10.
+11.
+12.
+13. Difference between shallow copy and deep copy .
+=========>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+

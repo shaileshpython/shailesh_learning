@@ -1,22 +1,24 @@
-Que 1 : Tell about yourself ?
+Que 1 : Tell me about yourself ?
 ======> 1. Hi <name> ,This is shailesh ,Shailesh Rajanna Padalwar working as Software Developer at Buzzworks .
         2. Having Experience in python-Django Web-development around 3years 6 months .
-        3. Having Experience in Django Rest Framework,Django ORM,postgresql,ubuntu AND front-end technologies (HTML,CSS,BootStrap,JavaScript,jQuery,Ajax).
-        4. Having knowledge and experience in python OOPS ,decorators,django ORM .
+        3. Having Experience in Django Rest Framework,Django ORM,postgresql AND front-end technologies (HTML,CSS,BootStrap,JavaScript,jQuery,Ajax),cache memory Redis .
+        4. Having knowledge and experience in python OOPS ,decorators,generators,django ORM .
         5. My current project name is flexydial :
            =====================================
-           1. Fast,Friendly and Flexible Contact Center Solutions .
+           1. It provides Fast,Friendly and Flexible Contact/call Center Solutions .
 	   2. Dialer Management Software .
 	   3. It is callcenter application useful for callcenters,banks .
 	   4. There are two pannels agent and admin .
-	   5. For calling purpose we used freeswitch ,it googles open source application .
-	   6. For backend : python-Django,NodeJs .DB : postgresql .
-	   7. Front-end   : HTML,CSS,JavaScript,jQuery,VueJS .
-	   8. Temparary_memory or cache : Redis .
+	   5. For calling purpose we used freeswitch ,it is googles open source application .
+	   Technologies :-
+	   ============
+	   1.. For backend : python-Django,NodeJs .DB : postgresql .
+	   2. Front-end   : HTML,CSS,JavaScript,jQuery,VueJS .
+	   3. Temparary_memory or cache : Redis .
+	   
 	  ##1. What kind of tasks u did here ?
 	     task 1 : site_id  | middleware_concept ,custom models,for every table site field .
-	     task 2 : file transfer from one server to other server schedular based at morning 6am | paramiko module ,username,hostname,password ,sftp(Secure File Transfer Protoco) method.
-	                 
+	     task 2 : file transfer from one server to other server schedular based at morning 6am | paramiko module ,username,hostname,password ,sftp(Secure File Transfer Protocol) method.	                 
 	              	ssh_client=paramiko.SSHClient()
 			ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) #to connect with server 
 			ssh_client.connect(hostname=hostname,username=username,password=password)
@@ -29,12 +31,13 @@ Que 1 : Tell about yourself ?
 			dest_path="/home/test/"+'_'+str('ic4_trails')+'_'+now+".xlsx" #for testing
 			sftp_client.put(src_path,dest_path)
 			
-	     task 3 :  predictive live dashboard | redis ,Django ORM .
+	     task 3 :  predictive live dashboard | concepts redis ,Django ORM .
 	     task 4 :  show kyc documents of all customers at campaign login .| bootstrap model target model ,datatables in javascript .
-	     task 5 :  scripts | to move files,rename crm field names ,update contacts queued .
+	     task 5 :  scripts | to move files,rename crm field names , update contacts queued .
 	     task 6 :  To solve migration issues at production by editing migration files .
 	     task 7 :  Reduce load issue while downloading heavy/large file by chunksize .
-	     task 8 :  automatic calling | 1. automatic campaign login 2. automatic calling based on given callmod .
+	     task 8 :  automatic calling | 1. automatic campaign login 2. automatic calling based on given callmod .(Js,api,recursion concepts).
+	     
 Que 2: How redis ,we can use in Django ?
 =======>
        1. settings.py
@@ -53,8 +56,182 @@ Que 3: What is pickling in python ?
      form or network supported form, is called serialization (Marshalling or pickling)
 
 
-	          
-	     
+======================================================================================================================================================
+
+1_interview  (TCS,08-Sep-2022)  :-
+==============================
+Questions :
+==========
+1. What is difference between list and set ?
+2. list compression ?
+3. lambda function  ?
+4. Factorial program using lambda function .
+5. Do not allow immediate repeation in a given list consisting integers .
+   ip = [1,1,2,2,2,3,3,5,3]
+   op = [1,2,3,5,3]
+6. Difference between instantanous variables and static variables with examples .
+7. What is constructor .
+8. Types of Inheritance .
+9. Is method overloading supports python ?
+10. *args and **args with examples .
+11. with statement ?
+12. Insert and extend functions of list ?
+13. Why we need return statement in function .
+14. shallow copy and deep copy ?
+
+
+
+##1. What is difference between list and set ?
+====> 1. list : It is represented with rectangular brackets [] and elements are seperated with comma. 
+         set  : It is represented with curly braces {} and elements are seperated with comma .
+         
+      2. list : duplicates allowed .
+         set  : duplicates not allowed .
+         
+      3. list : indexing and slicing allowed .
+         set  : indexing and slicing not allowed .
+ 
+##2. What is list compression ?
+=====> 
+	A Python list comprehension consists of brackets containing the expression, which is executed for each element along with the for loop to iterate over each element in the Python list. "Python List comprehension provides a much more short syntax for creating a new list based on the values of an existing list" .
+	
+	The Syntax
+	newlist = [expression for item in iterable_obj if condition == True]
+	
+	The return value is a new list, leaving the old list(or iterable object) unchanged.
+       eg.     program:
+               
+		iterable_obj = range(1,20)
+		new_list = [ i*2 for i in iterable_obj if i%2==0]
+		print(new_list)
+		
+		output :
+		 [4, 8, 12, 16, 20, 24, 28, 32, 36]
+		 
+		 
+##3. What is lambda function ?
+=====>   lambda function :
+         ================
+          It is useful for instantanous use or one time use .
+          no need to call .
+          syntax :
+           x = lambda args:expression    ### x is result .
+           print(x(args))		 
+
+##4. 	Factorial program with lambda function ?
+=======>    factorial of 3 :
+                  = 3*2*1
+                  = 6
+          Method 1 :
+          ==========
+          Simple Method :
+          # Python 3 program to find
+          # factorial of given number
+	def factorial(n):
+     
+  	  # single line to find factorial
+  	  return 1 if (n==1 or n==0) else n * factorial(n - 1);
+ 
+	# Driver Code
+	num = 5;
+	print("Factorial of",num,"is",
+	factorial(num))
+ 
+        Method 2 :
+        ==========
+        
+        x = lambda num : 1 if num <= 1 else num*x(num-1)
+	number = int(input('Enter number: '))
+	print('%d != %d' %(number, x(number)))
+##5 Do not allow immediate repeation in a given list consisting integers .
+
+    ip = [1,1,2,2,2,3,3,5,3]
+    op = [1,2,3,5,3]
+    ip = [1,1,2,2,2,3,3,5,3]
+    op = []
+    op.append(ip[0])
+    
+for i in range(0,len(ip)):
+    if op and (ip[i] !=op[-1]):
+        op.append(ip[i])
+    
+        
+        
+print(op,"pppppppppppp")
+                      
+                  
+##6. Difference between instantanous variables and static variables with examples .
+====> Instantanous variables :
+      =======================
+      1. the variables which are declared with self and object level variables .object to object will change . 
+         class level variables are known as static variables .
+         
+        Instance Variable vs Static Variable:
+	Note: In the case of instance variables for every object a seperate copy will be
+	created,but in the case of static variables for total class only one copy will be created and
+	shared by every object of that class.
+      
+                  
+class Test:
+    x=10
+    def __init__(self):
+        self.y=20
+        
+t1=Test()
+t2=Test()
+print('t1:',t1.x,t1.y)
+print('t2:',t2.x,t2.y)
+Test.x = 888   ###will change for every object
+t1.y = 999     ### will change only for t1 object .
+print('t1:',t1.x,t1.y)
+print('t2:',t2.x,t2.y)
+
+Output
+======
+
+t1: 10  20
+t2: 10  20
+t1: 888 999
+t2: 888 20         
+                  
+                  
+###7. What is constructor ?
+=====># difference between method and constructor .
+      Differences between Methods and Constructors
+
+1) Name of method can be any name
+1) Constructor name should be always __init__
+
+2) Method will be executed if we call that
+method .
+2) Constructor will be executed automatically at
+the time of object creation .
+
+3) Per object, method can be called any number
+of times.
+3) Per object, Constructor will be executed only
+once.
+
+4) Inside method we can write business logic .
+4) Inside Constructor we have to declare and
+initialize instance variables .
+                  
+                  
+Que:                  
+##8. Types of Inheritance .                  
+     1. single inheritance ,2.Multilevel inheritance,3.Multiple inheritance,4.hierachycal inheritance ,5.hybrid 6.cyclic inheritance .
+     
+     Hierarchical Inheritance:
+	The concept of inheriting properties from one class into multiple classes which are
+	present at same level is known as Hierarchical Inheritance .
+	
+                             
+	     eg:
+	       class P:
+	       
+	       class C1(P):
+	       
+	       class C2(P):
 	     
 	     
 	     
