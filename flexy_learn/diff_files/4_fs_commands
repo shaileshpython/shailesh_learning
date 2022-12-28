@@ -1,0 +1,90 @@
+#To Hangup a call
+==================
+	1. Django Level :
+	   ============
+		       kwargs['SERVER'].freeswitch.api("uuid_kill",kwargs['uuid']) ##uuid of call from redis
+		       
+	2.  fs_cli :
+	    =======
+		    >>uuid_kill <uuid>
+		    
+#To check gateway status :
+========================
+       >> sofia status gateway
+       
+#To originate call from fs_cli :
+===============================
+		    
+
+
+
+#kwargs['SERVER'] :
+=================
+               SERVER = freeswicth_server(settings.FREESWITCH_IP_ADDRESS) #Get XML RPC based URL for freeswitch through campaign switch ip
+
+
+
+#How communication between freeswitch and django happening ?
+==========>  import socket
+	     import xmlrpc.client
+	     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	     s.connect(("8.8.8.8", 80))
+	     IP_ADDRESS = s.getsockname()[0]
+	     FREESWITCH_IP_ADDRESS = IP_ADDRESS
+	     
+	     
+	     #RPC DETAILS :
+	     RPC_HOST                = 'localhost'
+	     RPC_USERNAME            = 'freeswitch'
+             RPC_PASSWORD            = 'works'
+             RPC_PORT                = '8080'
+	     from callcenter.models import Switch #for making connection to the freeswitch by using the campaign ip_address
+	     rpc_port = Switch.objects.filter(ip_address=server_ip).first().rpc_port
+	     SERVER = xmlrpc.client.ServerProxy("http://%s:%s@%s:%s" % (RPC_USERNAME,
+			 RPC_PASSWORD,FREESWITCH_IP_ADDRESS,RPC_PORT))
+		      
+
+		      
+#xmlrpc.client.ServerProxy("http://freeswitch:works@FREESWITCH_IP_ADDRESS:8080")
+					 
+			 
+			 
+			 
+			 
+			 
+			 
+#How to add trunk ,to recognize freeswitch from any server ?
+===>
+> go to /usr/local/freeswitch/conf/sip_profiles/external
+>> cd /usr/local/freeswitch/conf/sip_profiles/external
+code :
+=====
+
+<include>
+        <gateway name="trunk1">
+                <params>
+                  <param name="proxy" value="192.168.3.87"/>
+                  <param name="register" value="false"/>
+                  <param name="caller-id-in-from" value="true"/>
+               </params>
+         </gateway>
+</include>
+
+
+
+
+
+
+
+
+
+
+
+	     
+	     
+	     
+
+
+
+
+               

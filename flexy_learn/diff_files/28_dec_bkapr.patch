@@ -1,0 +1,533 @@
+diff --git a/callcenter/models.py b/callcenter/models.py
+index c564948..eab8e10 100755
+--- a/callcenter/models.py
++++ b/callcenter/models.py
+@@ -1104,6 +1104,47 @@ class AgentActivity(models.Model):
+ 	def __str__(self):
+ 		return "%s" % self.user
+ 
++class AgentActivitybk(models.Model):
++	username = models.CharField(max_length=50,default='')
++	full_name = models.CharField(max_length=150,default='')
++	supervisor_name = models.CharField(max_length=150,default='')
++	campaign     =  models.CharField(max_length=150,default='')
++	app_idle_time = models.TimeField(default=default_time, blank=True, null=True)
++	dialer_idle_time = models.TimeField(default=default_time, blank=True, null=True)
++	pause_progressive_time = models.TimeField(default=default_time, blank=True, null=True)
++	progressive_time = models.TimeField(default=default_time, blank=True, null=True)
++	preview_time = models.TimeField(default=default_time, blank=True, null=True)
++	predictive_wait_time = models.TimeField(default=default_time, blank=True, null=True)
++	inbound_wait_time = models.TimeField(default=default_time, blank=True, null=True)
++	blended_wait_time = models.TimeField(default=default_time, blank=True, null=True)
++	ring_duration = models.TimeField(default=default_time, blank=True, null=True)
++	ring_duration_avg = models.CharField(max_length=255, blank=True, null=True)
++	hold_time = models.TimeField(default=default_time, blank=True, null=True)
++	media_time = models.TimeField(default=default_time, blank=True, null=True)
++	predictive_wait_time_avg = models.CharField(max_length=255, blank=True, null=True)
++	talk = models.CharField(max_length=255, blank=True, null=True)
++	talk_avg = models.CharField(max_length=255, blank=True, null=True)
++	bill_sec = models.CharField(max_length=255, blank=True, null=True)
++	bill_sec_avg = models.CharField(max_length=255, blank=True, null=True)
++	call_duration = models.CharField(max_length=255, blank=True, null=True)
++	feedback_time = models.TimeField(default=default_time, blank=True, null=True)
++	feedback_time_avg = models.CharField(max_length=150,default='')
++	break_time = models.TimeField(default=default_time, blank=True, null=True)
++	break_time_avg = models.CharField(max_length=150,default='')
++	app_login_time = models.TimeField(default=default_time, blank=True, null=True)
++	tea_break = models.CharField(max_length=150,default='')
++	lunch_break = models.CharField(max_length=150,default='')
++	breakfast_break = models.CharField(max_length=150,default='')
++	meeting = models.CharField(max_length=150,default='')
++	dinner_break = models.CharField(max_length=150,default='')
++	dialer_login_time = models.CharField(max_length=150,default='')
++	total_login_time = models.CharField(max_length=150,default='')
++	first_login_time = models.CharField(max_length=150,default='')
++	last_logout_time = models.CharField(max_length=150,default='')
++	total_calls = models.CharField(max_length=150,default='')
++	total_unique_connected_calls = models.CharField(max_length=150,db_index=True, default=None, null=True)
++	date = models.DateField(auto_now_add=False, db_index=True,default=None,null=True,unique=True)
++
+ class DNC(models.Model):
+ 	"""
+ 	This model is for storing the Dnc numbers.
+diff --git a/callcenter/utility.py b/callcenter/utility.py
+index e5d0f99..79c5a95 100755
+--- a/callcenter/utility.py
++++ b/callcenter/utility.py
+@@ -26,7 +26,7 @@ import datetime as dt
+ import itertools
+ from .models import (CampaignSchedule, Switch, DialTrunk, User, Group,
+ 	Disposition, AudioFile, PauseBreak, UserVariable, RelationTag,PhonebookBucketCampaign,
+-	UserRole, Script, User, AgentActivity, Campaign, DiallerEventLog, CallDetail,DNC,CSS, CdrFeedbck,
++	UserRole, Script, User, AgentActivity, AgentActivitybk, Campaign, DiallerEventLog, CallDetail,DNC,CSS, CdrFeedbck,
+ 	CallBackContact, CurrentCallBack, SnoozedCallback, Abandonedcall, ThirdPartyApiUserToken, SMSTemplate, SMSGateway,
+ 	DiaTrunkGroup,EmailScheduler,AdminLogEntry, ReportColumnVisibility, CallRecordingFeedback, InGroupCampaign, SkilledRouting,
+ 	EmailGateway,CampaignVariable, SkilledRoutingCallerid,Daemons,Holidays,PasswordManagement,PasswordChangeLogs)
+@@ -319,16 +319,17 @@ def delete_session(session):
+ 		print("ERROR:: delete_session function ",e)
+ 
+ def all_unexpired_sessions_for_user(user):
+-	   """this method is used to get all user sessions form
+-	   django session
+-	   """
+-	   user_sessions = []
+-	   all_sessions  = Session.objects.filter(expire_date__gte=timezone.now())
+-	   for session in all_sessions:
+-			   session_data = session.get_decoded()
+-			   if user.pk == int(session_data.get('_auth_user_id',0)):
+-					   user_sessions.append(session.pk)
+-	   return Session.objects.filter(pk__in=user_sessions)
++	"""
++	this method is used to get all user sessions form
++	django session
++	"""
++	user_sessions = []
++	all_sessions  = Session.objects.filter(expire_date__gte=timezone.now())
++	for session in all_sessions:
++		session_data = session.get_decoded()
++		if user.pk == int(session_data.get('_auth_user_id',0)):
++			user_sessions.append(session.pk)
++	return Session.objects.filter(pk__in=user_sessions)
+ 
+ def delete_all_unexpired_sessions_for_user(user, session_to_omit=None):
+ 	"""this method is used to delete user sessions from
+@@ -1763,6 +1764,35 @@ def set_download_progress_redis(instance_id, percentage=0, is_refresh=False):
+ 			DOWNLOAD_STATUS[''+str(instance_id)+''] = percentage
+ 	settings.R_SERVER.set("download", pickle.dumps(DOWNLOAD_STATUS))
+ 
++def agentactivity_data(start_date,request):
++	"""
++	Agent Activity data from backup table 
++	"""
++	data = {}
++	queryset = AgentActivitybk.objects.filter(date=start_date)
++	# count = queryset.count()
++	selected_user = request.POST.getlist("selected_user", [])
++	selected_campaign = request.POST.getlist("selected_campaign", [])
++	all_users = request.POST.get("all_users",[])
++	if selected_user:
++		users = list(User.objects.filter(id__in=selected_user).values_list("username",flat=True))
++		queryset = queryset.filter(username__in=users)
++	if selected_campaign:
++		queryset = queryset.filter(campaign__in=selected_campaign)
++	page = int(request.POST.get('page' ,1))
++	paginate_by = int(request.POST.get('paginate_by', 10))
++	agent_data = list(queryset.values())
++	users = get_paginated_object(queryset, page, paginate_by)
++	data['total_records'] = users.paginator.count
++	data['total_pages'] = users.paginator.num_pages
++	data['page'] = users.number
++	data['start_index'] = users.start_index()
++	data['end_index'] = users.end_index()
++	data['has_next'] = users.has_next()
++	data['has_prev'] = users.has_previous()
++	data['table_data'] = agent_data[::-1]
++	return data
++
+ def get_download_progress(instance_id):
+ 	"""
+ 	this is the function defined for get the download progress
+@@ -1878,7 +1908,6 @@ def save_file(csv_file, download_report_id, report_name, user, file_type='csv'):
+ 	"""	
+ 	try:
+ 		from django.conf import settings
+-
+ 		download_folder = settings.MEDIA_ROOT+"/download/"+datetime.now().strftime("%m.%d.%Y")+"/"+str(user.id)+"/"
+ 		if not os.path.exists(download_folder):
+ 			os.makedirs(download_folder)
+@@ -1916,33 +1945,37 @@ def sending_reports_through_mail(user,report_name):
+ 	encode_file_name = "download/"+datetime.now().strftime("%m.%d.%Y")+"/"+str(user.id)+"/"+str(user.id)+'_'+str(report_name)+'_'+str(datetime.now().strftime("%m.%d.%Y.%H.%M.%S"))+".csv"
+ 	response = 0 
+ 	try:
++		print("aaaaaaaaaaaa")
+ 		email_sch_obj = EmailScheduler.objects.filter(created_by_id=user.id).first()
+-		connection = email_connection(email_sch_obj.emails['from'],email_sch_obj.emails['password'])
+-		email_sch_obj = EmailScheduler.objects.all()
+-		for emails_obj in email_sch_obj:
+-			email_report_names = [email_report_name.replace(" ","").lower() for email_report_name in emails_obj.reports]
+-			download_report_name  = []
+-			user_id = User.objects.get(username=user).id
+-			if report_name.replace("_","").lower() in email_report_names and user_id == emails_obj.created_by_id:
+-				subject = report_name.title() +'Reports Of '+datetime.today().date().strftime('%Y-%m-%d')
+-				#encode the file name
+-				sample_string_bytes = encode_file_name.encode("ascii") 
+-				  
+-				base64_bytes = base64.b64encode(sample_string_bytes) 
+-				base64_string = base64_bytes.decode("ascii") 
+-				html_content = """
+-				<p>
+-				Hello {0},<br>
+-				Kindly click the below link to download {1} report of  {2}
+-				<br>
+-				<a href='https://{3}/api/download-scheduled-report/{4}'>Download Report</a>
+-				""".format(full_name, report_name,datetime.today().date().strftime('%Y-%m-%d'),settings.IP_ADDRESS,base64_string)
+-				from_email = emails_obj.emails['from']
+-				to = emails_obj.emails['to']
+-				msg = EmailMultiAlternatives(subject,"",from_email, to,connection=connection)
+-				msg.attach_alternative(html_content, "text/html")
+-				response = msg.send()
+-				save_email_log(report_name,emails_obj.emails['from'],emails_obj.emails['to'],response)
++		if email_sch_obj:
++			connection = email_connection(email_sch_obj.emails['from'],email_sch_obj.emails['password'])
++			email_sch_obj = EmailScheduler.objects.all()
++			print("bbbbbbbbbbb")
++			for emails_obj in email_sch_obj:
++				email_report_names = [email_report_name.replace(" ","").lower() for email_report_name in emails_obj.reports]
++				download_report_name  = []
++				user_id = User.objects.get(username=user).id
++				if report_name.replace("_","").lower() in email_report_names and user_id == emails_obj.created_by_id:
++					subject = report_name.title() +'Reports Of '+datetime.today().date().strftime('%Y-%m-%d')
++					#encode the file name
++					sample_string_bytes = encode_file_name.encode("ascii") 
++					
++					base64_bytes = base64.b64encode(sample_string_bytes) 
++					base64_string = base64_bytes.decode("ascii") 
++					html_content = """
++					<p>
++					Hello {0},<br>
++					Kindly click the below link to download {1} report of  {2}
++					<br>
++					<a href='https://{3}/api/download-scheduled-report/{4}'>Download Report</a>
++					""".format(full_name, report_name,datetime.today().date().strftime('%Y-%m-%d'),settings.IP_ADDRESS,base64_string)
++					if emails_obj:
++						from_email = emails_obj.emails['from']
++						to = emails_obj.emails['to']
++						msg = EmailMultiAlternatives(subject,"",from_email, to,connection=connection)
++						msg.attach_alternative(html_content, "text/html")
++						response = msg.send()
++						save_email_log(report_name,emails_obj.emails['from'],emails_obj.emails['to'],response)
+ 	except Exception as e:
+ 		print('Sending Email from Scheduler',e)
+ 
+@@ -2050,10 +2083,12 @@ def download_call_detail_report(filters, user, col_list, serializer_class, downl
+ 			set_download_progress_redis(download_report_id, 25, is_refresh=True)
+ 		db_settings = settings.DATABASES['default']
+ 		db_connection = "postgresql://{user}:{password}@{host}:{port}/{db_name}".format(user = db_settings['USER'], password=db_settings['PASSWORD'], host = db_settings['HOST'], db_name = db_settings['NAME'], port = db_settings['PORT'])
++		
+ 		if download_type == 'xls':
+ 			file_path = download_folder+str(user.id)+'_'+str('call_details')+'_'+str(datetime.now().strftime("%m.%d.%Y.%H.%M.%S"))+".xlsx"
+ 			with pd.ExcelWriter(file_path, engine="xlsxwriter",options={'remove_timezone': True}) as writer:
+ 				pd.read_sql(sub_dispo,db_connection).to_excel(writer, sheet_name = "Sheet1", header = True, index = False)
++		
+ 		else:
+ 			file_path = download_folder+str(user.id)+'_'+str('call_details')+'_'+str(datetime.now().strftime("%m.%d.%Y.%H.%M.%S"))+".csv"
+ 			file_exists = False
+@@ -2132,6 +2167,41 @@ def DownloadCssQuery(filters, download_report_id, user):
+ 	except Exception as e:
+ 		print("Error in download css query", e)
+ 
++# from models  import AgentActivitybk
++def backup_agentdata(csv=[]):
++	try:
++		dataframe = pd.DataFrame(csv[1:],columns=csv[0])
++		AgentActivitybk.objects.bulk_create(
++		AgentActivitybk(**vals) for vals in dataframe.to_dict('records'))
++	except Exception as e:
++		print("Error at backup_agentdata function ", e)
++
++def download_from_bkapr(filters,user,col_list,download_report_id):
++	try:
++		download_folder = settings.MEDIA_ROOT+"/download/"
++		file_path = download_folder+str(user.id)+'_'+str('call_details')+'_'+str(datetime.now().strftime("%m.%d.%Y.%H.%M.%S"))+".csv"
++		selected_campaign = filters.get("selected_campaign", [])
++		selected_user = filters.get("selected_user", [])
++		start_date = filters.get("start_date", "")
++		selected_date = start_date[:10]
++		download_type = filters.get('download_type',"")
++		file_path = download_folder+str(user.id)+'_'+"agent_performance_report"+'_'+str(datetime.now().strftime("%m.%d.%Y.%H.%M.%S"))
++		users = list(User.objects.filter(id__in=selected_user).values_list("username",flat=True))
++		agentactivity_data = AgentActivitybk.objects.filter(date=selected_date,users__in=users,campaign__in=selected_campaign).values()
++		df = pd.DataFrame(agentactivity_data)
++		df = df[col_list]
++		if download_type == 'xls':
++			file_path = file_path + ".xls"
++			with pd.ExcelWriter(file_path, engine="xlsxwriter",options={'remove_timezone': True}) as writer:
++				df.to_excel(writer, sheet_name = "Sheet1", header = True, index = False)
++		else:
++			file_path = file_path + ".csv"
++			df.to_csv(file_path)
++	except Exception as e:
++		print("exception from download from bkapr ",e)	
++
++	
++
+ 
+ def download_agent_perforance_report(filters, user, col_list, download_report_id):
+ 	"""
+@@ -2140,28 +2210,40 @@ def download_agent_perforance_report(filters, user, col_list, download_report_id
+ 	try:
+ 		query = {}
+ 		csv_file = []
+-		count=0
++		count = 0
+ 		logged_in_user = User.objects.get(id=user)
+ 		all_users = filters.get("all_users",[])
+ 		selected_campaign = filters.get("selected_campaign", [])
+ 		selected_user = filters.get("selected_user", [])
+ 		start_date = filters.get("start_date", "")
+-		start_date = start_date[:10] 
+-		# end_date = filters.get("end_date", "")
++		start_date = start_date[:10]
++		if start_date != str(date.today()):
++			download_from_bkapr(filters,user,col_list,download_report_id)
++		start_end_date_filter = Q(created__date=start_date)
++		app_idle_time_filter = Q(campaign_name='')|Q(event='DIALER LOGIN')
++		dialler_idle_time_filter = ~Q(campaign_name="")&~Q(event__in=["DIALER LOGIN","LOGOUT"])
++		default_time = timedelta(seconds=0)
++	
+ 		download_type = filters.get('download_type',"")
+ 		# start_date = datetime.strptime(start_date,"%Y-%m-%d %H:%M").isoformat()
+ 		# end_date = datetime.strptime(end_date,"%Y-%m-%d %H:%M").isoformat()
+ 		# agentactivity_users = list(AgentActivity.objects.values_list("user__id",flat=True))
+ 		agentactivity_users = list(AgentActivity.objects.filter(created__date=start_date).values_list("user__id",flat=True))
++		queryset = User.objects.all()
+ 		if selected_user:
+-			queryset = User.objects.filter(id__in=selected_user)
++			queryset = queryset.filter(id__in=selected_user)
++		else:
++			queryset = queryset.filter(id__in=agentactivity_users)
++		if selected_user:
++			queryset = queryset.filter(id__in=selected_user)
+ 		else:
+ 			queryset = User.objects.filter(id__in=agentactivity_users)
+-		queryset = queryset.order_by("username")
+-		start_end_date_filter = Q(created__date=start_date)
+-		app_idle_time_filter = Q(campaign_name='')|Q(event='DIALER LOGIN')
+-		dialler_idle_time_filter = ~Q(campaign_name="")&~Q(event__in=["DIALER LOGIN","LOGOUT"])
+-		default_time = timedelta(seconds=0)
++			queryset = queryset.order_by("username")
++		# start_end_date_filter = Q(created__date=start_date)
++		# app_idle_time_filter = Q(campaign_name='')|Q(event='DIALER LOGIN')
++		# dialler_idle_time_filter = ~Q(campaign_name="")&~Q(event__in=["DIALER LOGIN","LOGOUT"])
++		# default_time = timedelta(seconds=0) ##not used variables 
++
+ 		if "" in col_list:
+ 			col_list.remove("")
+ 		col_list.append('date')
+@@ -2279,6 +2361,10 @@ def download_agent_perforance_report(filters, user, col_list, download_report_id
+ 			if download_report_id!=None:
+ 				set_download_progress_redis(download_report_id, round(percentage,2))
+ 		####### To save file ###########
++		if download_type == 'backup':
++			backup_agentdata(csv = csv_file)
++
++		print("shailesh,---")
+ 		if download_type == 'xls':
+ 			save_file(csv_file, download_report_id, 'agent_performance', logged_in_user, 'xls')
+ 		else:
+@@ -2305,7 +2391,6 @@ def campaignwise_performance_report(filters, user, col_list, download_report_id)
+ 		download_type = filters.get('download_type',"")
+ 		start_date = datetime.strptime(start_date,"%Y-%m-%d %H:%M").isoformat()
+ 		end_date = datetime.strptime(end_date,"%Y-%m-%d %H:%M").isoformat()
+-
+ 		user_list = campaign_list =[]
+ 		admin = False
+ 		if user.user_role and user.user_role.access_level == 'Admin':
+@@ -2400,6 +2485,23 @@ def campaignwise_performance_report(filters, user, col_list, download_report_id)
+ 			set_download_progress_redis(download_report_id, 100.0, is_refresh=True)
+ 		print('Error in agent mis report download', e)
+ 
++def move_agent_performance_report():
++	#AgentActivityBkup
++	# download_agent_perforance_report(filters, user, col_list, download_report_id)
++	start_date = datetime.today() - timedelta(days=1)           #.strftime('%Y-%m-%d 00:00')
++	start_date = start_date.strftime('%Y-%m-%d 00:00')
++	# end_time=datetime.today().strftime('%Y-%m-%d 23:30')
++	filters={'start_date':start_date,'download_type':"backup"}
++	col_list = ['username', 'full_name', 'supervisor_name', 'campaign', 'app_idle_time', 'dialer_idle_time', 'pause_progressive_time', 'progressive_time', 'preview_time', 'predictive_wait_time', 'inbound_wait_time', 'blended_wait_time', 'ring_duration', 'ring_duration_avg', 'hold_time', 'media_time', 'predictive_wait_time_avg', 'talk', 'talk_avg', 'bill_sec', 'bill_sec_avg', 'call_duration', 'feedback_time', 'feedback_time_avg', 'break_time', 'break_time_avg', 'app_login_time', 'tea_break', 'lunch_break', 'breakfast_break', 'meeting', 'dinner_break', 'dialer_login_time', 'total_login_time', 'first_login_time', 'last_logout_time', 'total_calls', 'total_unique_connected_calls']
++	user = User.objects.filter(username='admin').first().id
++
++	download_report_id = None
++	download_agent_perforance_report(filters, user,col_list,download_report_id)
++	
++	#return ""
++
++
++
+ def download_management_performance_report(filters, user, col_list, download_report_id):
+ 	"""
+ 	this is the function for download management performance  reports
+diff --git a/callcenter/views.py b/callcenter/views.py
+index 530a182..4c9df6d 100644
+--- a/callcenter/views.py
++++ b/callcenter/views.py
+@@ -66,7 +66,7 @@ from flexydial.views import (check_permission, get_paginated_object, data_for_pa
+ 		data_for_vue_pagination, sendSMS, csvDownloadTemplate, create_admin_log_entry, sendsmsparam,user_hierarchy_func,user_in_hirarchy_level)
+ from callcenter.signals import (fs_pre_del_user)
+ from callcenter.schedulejobs import (leadrecycle_add,leadrecycle_del,schedulereports_download,sched,remove_scheduled_job)
+-from .utility import (delete_all_unexpired_sessions_for_user, delete_session, get_statKey, redirect_user, get_object, get_pre_campaign_edit_info,
++from .utility import (delete_all_unexpired_sessions_for_user,agentactivity_data, delete_session, get_statKey, redirect_user, get_object, get_pre_campaign_edit_info,
+ 		get_pre_campaign_create_info, validate_data, filter_queryset, paginate_queryset, get_paginated_response,
+ 		validate_uploaded_users_file, upload_users, get_current_users, set_agentReddis,
+ 		create_agentactivity, get_formatted_agent_activities, get_campaign_users, get_agent_mis,get_campaign_mis,
+@@ -2576,6 +2576,7 @@ class CallDetailReportView(LoginRequiredMixin,APIView):
+ 			if not (request.user.is_superuser):
+ 				get_camp_users = list(get_campaign_users(selected_campaign,
+ 				request.user).values_list("id",flat=True))
++				
+ 				query_string=Q(campaign_name__in = selected_campaign,user__in=get_camp_users)|Q(campaign_name__in = selected_campaign,user=None)
+ 		queryset = CallDetail.objects.filter(start_end_date_filter).filter(query_string).filter(**query).select_related("campaign", "user")
+ 		if request.POST.get('format', None) == 'datatables':
+@@ -3189,13 +3190,14 @@ class AgentPerformanceReportView(LoginRequiredMixin,APIView):
+ 	renderer_classes = [TemplateHTMLRenderer,]
+ 	template_name = "reports/agent-performance.html"
+ 	permissions = {"Dashboard": ["all"]}
+-
++	
+ 	def get(self, request, *args, **kwargs):
+ 		context = {}
+ 		user_list = campaign_list =[]
+ 		admin = False
+ 		report_visible_cols = get_report_visible_column("3",request.user)
+-		users_agentactivity = list(AgentActivity.objects.filter(created__date=date.today()).values_list("user__id",flat=True))
++		# users_agentactivity = list(AgentActivity.objects.filter(created__date=date.today()).values_list("user__id",flat=True))
++		users_agentactivity = []
+ 		if request.user.user_role and request.user.user_role.access_level == 'Admin':
+ 			admin = True
+ 		if request.user.is_superuser:
+@@ -3241,10 +3243,9 @@ class AgentPerformanceReportView(LoginRequiredMixin,APIView):
+ 		writer = {}
+ 		admin = False
+ 		download_report = request.POST.get("agent_reports_download", "")
+-		# users_agentactivity = list(AgentActivity.objects.values_list("user__id",flat=True))
+ 		start_date = request.POST.get("start_date", "")
+ 		start_date = start_date[:10]
+-		users_agentactivity = list(AgentActivity.objects.filter(created__date=start_date).values_list("user__id",flat=True))
++		
+ 		if download_report:
+ 			context = {}
+ 			col_name = request.POST.get("column_name", "")
+@@ -3257,6 +3258,12 @@ class AgentPerformanceReportView(LoginRequiredMixin,APIView):
+ 			DownloadReports.objects.create(report='Agent Performance', filters=filters, user=request.user.id, serializers=None, col_list=col_list, status=True)
+ 			return JsonResponse({"message":"Your Download request is created, will notify in download notification once completed."})
+ 
++		if start_date != str(date.today()):
++			data = agentactivity_data(start_date,request)
++			return JsonResponse(data)
++
++		users_agentactivity = list(AgentActivity.objects.filter(created__date=start_date).values_list("user__id",flat=True))
++		
+ 		if request.user.user_role and request.user.user_role.access_level == 'Admin':
+ 			admin = True
+ 		selected_user = request.POST.getlist("selected_user", [])
+@@ -3267,18 +3274,21 @@ class AgentPerformanceReportView(LoginRequiredMixin,APIView):
+ 			queryset = User.objects.filter(id__in=selected_user)		
+ 		else:
+ 			queryset = User.objects.filter(id__in=users_agentactivity)
++		
++		if selected_campaign:
++			campaign_users = list(Campaign.objects.filter(name__in=selected_campaign).values_list("users__id",flat=True)) 
++			queryset = queryset.filter(id__in=campaign_users)
+ 		queryset = queryset.order_by("username")
+ 		page = int(request.POST.get('page' ,1))
+ 		paginate_by = int(request.POST.get('paginate_by', 10))
+-
+ 		users = get_paginated_object(queryset, page, paginate_by)
+-		start_end_date_filter = Q(created__date=start_date)
++		selected_date = Q(created__date=start_date)
+ 		app_idle_time_filter = Q(campaign_name='')|Q(event='DIALER LOGIN')
+ 		dialler_idle_time_filter = ~Q(campaign_name="")&~Q(event__in=["DIALER LOGIN","LOGOUT"])
+ 		default_time = timedelta(seconds=0)
+-
++		
+ 		for user in users:
+-			user = User.objects.filter(id=user.id).prefetch_related(Prefetch('calldetail_set',queryset=CallDetail.objects.filter(start_end_date_filter).filter(user=user)),Prefetch('agentactivity_set',queryset=AgentActivity.objects.filter(start_end_date_filter).filter(user=user))).first()
++			user = User.objects.filter(id=user.id).prefetch_related(Prefetch('calldetail_set',queryset=CallDetail.objects.filter(selected_date).filter(user=user)),Prefetch('agentactivity_set',queryset=AgentActivity.objects.filter(selected_date,user=user))).first()
+ 			if selected_campaign:
+ 				calldetail = user.calldetail_set.filter(campaign_name__in=selected_campaign)
+ 				agentactivity = user.agentactivity_set.filter(Q(campaign_name__in=selected_campaign)|Q(
+diff --git a/flexydial/settings.py b/flexydial/settings.py
+index ee0b916..881fa88 100755
+--- a/flexydial/settings.py
++++ b/flexydial/settings.py
+@@ -29,9 +29,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ SECRET_KEY = '*^gyxflla@kwhnj6$o)n=ihi2-ntcy-)t7phnc^%p!9_a&al&!'
+ 
+ # SECURITY WARNING: don't run with debug turned on in production!
+-DEBUG = False
++DEBUG =   True             #False
+ 
+-DEVELOPMENT = os.environ.get("DEVELOPMENT",False)
++DEVELOPMENT =  True     #os.environ.get("DEVELOPMENT",False)
+ LOGIN_URL = '/'
+ ALLOWED_HOSTS = ['*']
+ 
+@@ -97,7 +97,7 @@ WSGI_APPLICATION = 'flexydial.wsgi.application'
+ DATABASES = {
+     'default': {
+         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+-        'NAME': os.environ.get('FLEXYDIAL_DB_NAME','flexydial'),
++        'NAME': 'flexy_hsl1',      #os.environ.get('FLEXYDIAL_DB_NAME','flexydial'),
+         'USER': os.environ.get('FLEXYDIAL_DB_USER','flexydial'),
+         'PASSWORD': os.environ.get('FLEXYDIAL_DB_PASS',''),
+         'HOST': os.environ.get('FLEXYDIAL_DB_HOST','127.0.0.1'),
+@@ -105,7 +105,7 @@ DATABASES = {
+     },
+     'crm': {
+         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+-        'NAME': os.environ.get('CRM_DB_NAME','crm'),
++        'NAME': 'crm_hsl1',#os.environ.get('CRM_DB_NAME','crm'),
+         'USER': os.environ.get('CRM_DB_USER','flexydial'),
+         'PASSWORD': os.environ.get('CRM_DB_PASS',''),
+         'HOST': os.environ.get('CRM_DB_HOST','127.0.0.1'),
+diff --git a/fs-dialplan/dev_setup.sh b/fs-dialplan/dev_setup.sh
+index 20df8ca..4a35e2f 100755
+--- a/fs-dialplan/dev_setup.sh
++++ b/fs-dialplan/dev_setup.sh
+@@ -15,7 +15,7 @@ source /etc/environment
+ docker build -t flexydial-websocket . 
+ # docker login -u vedakatta -p ${DOCKER_TOKEN}
+ # docker pull vedakatta/flexydial-websocket
+-cat <<EOT > /etc/default/flexydial-websocket
++cat <<EOT >> /etc/default/flexydial-websocket
+ HOST_URL=${APP_HOST}
+ REDIS_URL=${REDIS_HOST}
+ REDIS_PORT=6379
+diff --git a/scripts/manager.py b/scripts/manager.py
+index 1ace874..4d76da2 100644
+--- a/scripts/manager.py
++++ b/scripts/manager.py
+@@ -157,10 +157,8 @@ def fetch_callback_contact(campaign,fetch_count):
+ 		connections["default"].close()
+ def generate_report():
+ 	""" Downloading the reports """
+-
+ 	data = DownloadReports.objects.filter(is_start=False, status=True).distinct('user').order_by('user','start_date')
+ 	for i in data:
+-
+ 		if not DownloadReports.objects.filter(is_start=True, user=i.user):
+ 			i.status = False
+ 			i.is_start = True
+@@ -169,7 +167,6 @@ def generate_report():
+ 			if i.report=='Call Details':
+ 				download_call_detail_report(filters=i.filters, user=i.user, col_list=i.col_list, serializer_class=i.serializers, download_report_id=i.id)
+ 			if i.report=='Agent Performance':
+-				i.filters['end_date'] = i.filters['start_date']
+ 				download_agent_perforance_report(filters=i.filters, user=i.user, col_list=i.col_list,download_report_id=i.id)
+ 			if i.report=='Campaign Wise Performance':
+ 				campaignwise_performance_report(filters=i.filters, user=i.user, col_list=i.col_list,download_report_id=i.id)
+@@ -201,6 +198,7 @@ def generate_report():
+ 				download_phonebookinfo_report(filters=i.filters, user=i.user, col_list=i.col_list,download_report_id=i.id)
+ 			if i.report == 'Pending Contact':
+ 				download_pendingcontacts_report(filters=i.filters, user=i.user, col_list=i.col_list,download_report_id=i.id)
++
+ def phonebook_data_bucket():
+ 	"""
+ 	This function is use to reach the campaign hopper level of contacts in tempcontact_info table.
+@@ -355,6 +353,7 @@ def phonebook_data_bucket():
+ 											camp.save()
+ 					phonebook_ids = list(phonebook_list.values_list('id',flat=True))
+ 					phonebook_ids = list(map(str,phonebook_ids))
++					PHONEBOOK_STATUS = {}
+ 					PHONEBOOK_STATUS = pickle.loads(settings.R_SERVER.get("phonebook") or pickle.dumps(PHONEBOOK_STATUS))
+ 					if not set(phonebook_ids) & set(PHONEBOOK_STATUS.keys()):
+ 						settings.R_SERVER.hset("pb_campaign_status",campaign['id'], True)
+diff --git a/tools/app/buzzworks.crt b/tools/app/buzzworks.crt
+old mode 100644
+new mode 100755
+diff --git a/tools/app/buzzworks.key b/tools/app/buzzworks.key
+old mode 100644
+new mode 100755
+diff --git a/tools/app/flexycrt.sh b/tools/app/flexycrt.sh
+old mode 100644
+new mode 100755

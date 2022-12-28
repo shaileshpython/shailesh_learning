@@ -1,0 +1,19 @@
+############ Missing Reports at DialerEvent Log ########################
+	Problem :-
+	========
+	       #Data from TempContact Not deleting .
+	       #why : Due to cdrd service not in active mod or restart required .
+	       
+	       
+	       issue generate at local :
+	       ==========================
+	       1. do manual calling and stop cdrd(when agent in call) .
+	       2. do manual calling and stop psql service .
+	       
+	       How to see from front-end ?
+	       ==> at callReports data coming .
+	           at callRecording data not coming .
+	           
+	       
+       
+       
