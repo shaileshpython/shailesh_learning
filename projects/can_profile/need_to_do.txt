@@ -1,0 +1,5 @@
+1. csrf_token
+2. test with postman tool
+3. changes at UI level
+4. use db mongo-db
+ 

@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title> Profile | {% block title %}{% endblock title %}</title>    
+	<link rel="shortcut icon" href="/static/profile.jpeg/"/>   
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!-- All css files will come here -->
+	{% block stylesheets %}
+	<link rel="stylesheet" href="{% static '/css/bootstrap.min.css' %}">
+	<!-- <link rel="stylesheet" href="{% static '/melody/vendors/iconfonts/font-awesome/css/all.min.css' %}"> -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/css/tempusdominus-bootstrap-4.min.css" />
+	<!-- <link rel="stylesheet" href="{% static '/melody/vendors/css/vendor.bundle.base.css' %}">
+	<link rel= "stylesheet" href="{% static '/melody/vendors/css/vendor.bundle.addons.css' %}">
+	<link rel="stylesheet" href="{% static '/melody/css/style.css' %}"> -->
+	<link rel="stylesheet" href="{% static '/css/font-awesome.min.css'%}">
+	<link rel="stylesheet" href="{% static 'css/form-validator.css' %}" type="text/css">
+	<link rel="stylesheet" href="{% static 'css/tempusdominus-bootstrap-4.min.css' %}" />
+	<link rel="stylesheet" href="{% static '/css/jquery.toast.min.css' %}" />
+	<link rel="stylesheet" href="{% static 'css/jquery.dataTables.min.css' %}">
+	<link rel="stylesheet" href="{% static 'css/dataTables.bootstrap4.min.css' %}">
+	<link rel="stylesheet" href="{% static 'css/responsive.bootstrap4.min.css' %}">
+	<link rel="stylesheet" href="{% static 'css/select.dataTables.min.css' %}">
+	<link rel="stylesheet" href="{% static '/css/common.css' %}">
+	<link rel="stylesheet" href="{% static '/css/custom.css' %}">
+	<link rel="stylesheet" href="{% static '/css/preloader.css' %}">
+    <script src="http://code.jquery.com/jquery-1.6.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+	{% endblock stylesheets %} 
+	{% block extra-stylesheets %}
+	{% endblock extra-stylesheets %} 
+</head>
+<body>
+       <div class="row center" alignment="center">
+            <div class="col-md-12 grid-margin stretch-card">
+                <div class="card">
+                    <div class="form-group row">
+                        <label for="" class="col-sm-4 col-form-label">JOB PROFILE :</label><br><br>
+                        <div class="col-sm-8">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <label for="user-name" class="col-sm-4 col-form-label">User Name<span class="star">*</span> :</label> <br><br>
+                                            <div class="col-sm-8">
+                                                <input type="text" data-toggle="tooltip" data-original-title="Enter User Name" class="form-control" id="username" placeholder="UserName" name="username" data-validation="length alphanumeric" data-validation-length="max100" data-validation-allowing="_",data-validation-error-msg-container="#user_name_exist">
+                                                <span id="user_name_exist"></span>
+                                            </div>
+                                        </div><br><br>
+                                    </div>
+                                </div>  
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group row">
+                                            <label for="name" class="col-sm-4 col-form-label">Name<span class="star">*</span> :</label>
+                                            <div class="col-sm-8">
+                                                <input type="text" data-toggle="tooltip" data-original-title="Enter Your Name" class="form-control" id="name" placeholder="Name" name="name" data-validation="length alphanumeric" data-validation-length="max100" data-validation-allowing="_",data-validation-error-msg-container="#camp_name_exist">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div><br><br>
+                                <div>
+                                <label for="" class="col-sm-4 col-form-label">Choose your preferred job role<span class="star">*</span> :</label>    
+                            <select class="form-control" name="role" id="jobrole">
+                                {% for role in roles %}
+                                <option value="{{ role }}"> {{ role.0 }} </option>
+                                {% endfor %}
+                            </select><br> 
+                                </div>
+                            <div>
+                                {% csrf_token %}
+                                <button id="btnsub" type="submit">submit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+</body>
+
+<script type="text/javascript">
+   
+$("#btnsub").click(function() {
+    role = $('#role :selected').text().trim();
+    name = $('#name').val().trim();
+    username =  $('#name').val().trim();
+    var csrf_token = $("input[name='csrfmiddlewaretoken']").val();
+    $.ajax({
+        type: 'post',
+        headers: { "X-CSRFToken": csrf_token },
+        url: '/',
+        data: {'name':name,'username':username,'role':role},
+        success: function(data) {
+            console.log(data,"successs ")
+            location.reload();
+            },
+        error: function(data) {
+            if (data["responseJSON"]["username_error"]){
+                        $("#user_name_exist").html(`<span class="help-block form-error">${data["responseJSON"]["username_error"]}</span>`).addClass("has-error")
+                        $("#user_name_exist").removeClass("valid").addClass("error")                  
+                    }
+            console.log(data,"error")
+        },
+        complete: function (data) {
+            
+        }
+        });
+        });
+</script> 
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
