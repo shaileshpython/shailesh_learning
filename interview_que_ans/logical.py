@@ -35,3 +35,9 @@ def fact(n):
 
 def fact1(n):
     return 1 if (n==1 or n==0) else n*fact1(n-1)
+
+#Factorial program using lambda function .
+def fact2(n):
+    a = lambda n : 1 if (n==0 or n==1) else n*a(n-1)
+    # print(a(n),"===")
+    return a(n)
