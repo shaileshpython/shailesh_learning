@@ -41,3 +41,17 @@ def fact2(n):
     a = lambda n : 1 if (n==0 or n==1) else n*a(n-1)
     # print(a(n),"===")
     return a(n)
+
+# Do not allow immediate repeation in a given list consisting integers .
+
+#     ip = [1,1,2,2,2,3,3,5,3]
+#     op = [1,2,3,5,3]
+
+def noImmediateRepeation(ip_list):
+    op_list=[]
+    for element in ip_list:
+        if (len(op_list) and op_list[len(op_list)-1]!=element) or len(op_list)==0:
+            op_list.append(element)
+    return op_list
+        
+            
