@@ -53,5 +53,40 @@ def noImmediateRepeation(ip_list):
         if (len(op_list) and op_list[len(op_list)-1]!=element) or len(op_list)==0:
             op_list.append(element)
     return op_list
+
+def isAnagramStrings(s1,s2):
+    """  
+    Is Anagrams strings or not ?
+    """
+    if len(s1)==len(s2) and set(s1)==set(s2):
+        result = "Yes"
+        print("Yes")
+    else:
+        result = "No"
+        print("No")
+    return result
+
+def asceding_order(l):
+    #
+    for i in range(len(l)):
+        for j in range(i + 1, len(l)):
+            if l[i] > l[j]:
+                l[i], l[j] = l[j], l[i]
+    print(l)
+    return l
+
+def disceding_order(l):
+    for i in range(len(l)):
+        for j in range(i + 1, len(l)):
+            if l[i] < l[j]:
+                l[i], l[j] = l[j], l[i]
+    print(l)
+    return l
+    
+
+
+
+
+
         
             
