@@ -37,7 +37,8 @@ Que 1 : Tell me about yourself ?
 	     task 6 :  To solve migration issues at production by editing migration files .
 	     task 7 :  Reduce load issue while downloading heavy/large file by chunksize .
 	     task 8 :  automatic calling | 1. automatic campaign login 2. automatic calling based on given callmod .(Js,api,recursion concepts).
-	     
+	     task 9 : To reduce load issue by using backup table approach ,indexing and pandas with sql raw queries .
+		 
 Que 2: How redis ,we can use in Django ?
 =======>
        1. settings.py
@@ -232,15 +233,35 @@ Que:
 	       class C1(P):
 	       
 	       class C2(P):
-	     
-	     
-	     
-	     
-	     
-	     
-	     
-	     
-			
-				
-		
-		
+
+
+16,Jan-2023 BuzzyBrains,
+========================	     
+1. Ok start.
+2. Do u know gunicorn ?
+3. What kind of Inheritance ,we have in python ?
+4. What is constructor ? Without constructor possible ?
+5. What is difference between static method and class method ?
+6. Is multithreding in python ? what are the limitations ?
+7. Is abstract method available in python ? What module need to import ?
+8. coding :
+       Find max number from list which contain integers .like l = [2, 45,65,32,98,43] .
+
+9. coding :
+       Sort above list .
+
+10. Django :
+        Do you have idea of migration commands .
+		How u can migrate app based .
+		How u can migrate database based .
+		How u can revert migrations upto certain files .
+		===>To revert a migration:
+            python manage.py migrate <APP_NAME> <MIGRATION_NUMBER_PREFIX>
+
+11. Are you good on sql queries ? ==>No, good in ORM .
+======> Joins ,group_by,count ,
+
+12. Do u have idea of operations not filters . annotate,count,look ups .
+13. JWT Tokens ? How work without database .
+14.  
+
