@@ -24,5 +24,14 @@ def longest_substring_length(st):
     print("Length of longest substring :",length_of_longest_substring)
     return length_of_longest_substring
 
+#Decorator Example :
 
+#WAP TO PRINT FACTORIAL OF GIVEN NUMBER 
+def fact(n):
+    if n==1 or n==0:
+        return 1
+    else:
+        return n*fact(n-1)
 
+def fact1(n):
+    return 1 if (n==1 or n==0) else n*fact1(n-1)
