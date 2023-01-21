@@ -237,6 +237,7 @@ Que:
 
 16,Jan-2023 BuzzyBrains,
 ========================	     
+Questions :-
 1. Ok start.
 2. Do u know gunicorn ?
 3. What kind of Inheritance ,we have in python ?
@@ -264,4 +265,22 @@ Que:
 12. Do u have idea of operations not filters . annotate,count,look ups .
 13. JWT Tokens ? How work without database .
 14.  
+
+Q & A :-
+======
+1. Gunicorn ? --> HTTP SERVER 
+===> Gunicorn ‘Green Unicorn’ is a Python WSGI HTTP Server for UNIX. It’s a pre-fork worker model ported from Ruby’s Unicorn project. The Gunicorn server is broadly compatible with various web frameworks, simply implemented, light on server resource usage, and fairly speedy.
+   # WSGI :-
+      A Web Server Gateway Interface (WSGI) server implements the web server side of the WSGI interface for running Python web applications.
+2. What kind of Inheritance ,we have in python ?  
+===>  
+   
+
+
+
+
+
+
+
+
 

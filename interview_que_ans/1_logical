@@ -14,4 +14,15 @@ Output: 1
 Explanation: Only one platform is needed. 
 
 
-    
+
+
+
+12-Jan-2023,CodeVyasa
+======================
+WAP 1: Write a program to find longest substring which contain non-repeated letters .
+======
+def longest_substring():
+	s = input("Enter a string :")
+	list_of_substrings = []
+        sub = ""
+        for 
